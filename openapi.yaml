@@ -1,0 +1,390 @@
+openapi: 3.0.0
+info:
+  title: DataQRL API
+  version: 1.0.0
+  description: API documentation for DataQRL services including Upload, Processing, and Events
+
+servers:
+  - url: http://localhost:3000
+    description: Upload Service
+  - url: http://localhost:3001
+    description: Processing Service
+  - url: http://localhost:3002
+    description: Events Service
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Error message"
+
+    File:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60d5ecb8b5c9c62b3c7c1b5e"
+        originalName:
+          type: string
+          example: "data.csv"
+        mimeType:
+          type: string
+          example: "text/csv"
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, ERROR]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        path:
+          type: string
+          example: "/uploads/60d5ecb8b5c9c62b3c7c1b5e/data.csv"
+        processingError:
+          type: string
+          nullable: true
+
+    ProcessedData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        schema:
+          type: object
+        summary:
+          type: object
+
+paths:
+  /upload:
+    post:
+      summary: Upload a file
+      tags: [Upload]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fileId:
+                        type: string
+                      status:
+                        type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /files:
+    get:
+      summary: List all files
+      tags: [Upload]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, PROCESSING, COMPLETED, ERROR]
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      files:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/File'
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                          limit:
+                            type: integer
+                          total:
+                            type: integer
+                          totalPages:
+                            type: integer
+
+  /files/{fileId}:
+    get:
+      summary: Get file details
+      tags: [Upload]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      file:
+                        $ref: '#/components/schemas/File'
+    delete:
+      summary: Delete a file
+      tags: [Upload]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /files/{fileId}/data:
+    get:
+      summary: Get file data with pagination and filtering
+      tags: [Upload]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: query
+          in: query
+          schema:
+            type: string
+            description: JSON query string for filtering
+        - name: sort
+          in: query
+          schema:
+            type: string
+            description: JSON sort criteria
+      responses:
+        '200':
+          description: File data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      file:
+                        $ref: '#/components/schemas/ProcessedData'
+
+  /data/{fileId}:
+    get:
+      summary: Get processed file data
+      tags: [Processing]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Processed file data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      file:
+                        type: object
+                        properties:
+                          originalName:
+                            type: string
+                          mimeType:
+                            type: string
+                          status:
+                            type: string
+                          createdAt:
+                            type: string
+                            format: date-time
+                      processedData:
+                        $ref: '#/components/schemas/ProcessedData'
+
+  /retry/{fileId}:
+    post:
+      summary: Retry processing a file
+      tags: [Processing]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Processing retry initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /events/{fileId}:
+    get:
+      summary: Subscribe to events for a specific file
+      tags: [Events]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /events:
+    get:
+      summary: Subscribe to all events
+      tags: [Events]
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /connections/{fileId}:
+    get:
+      summary: Get connection count for a specific file
+      tags: [Events]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connection count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fileId:
+                        type: string
+                      connections:
+                        type: integer
+
+components:
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Upload
+    description: File upload and management operations
+  - name: Processing
+    description: File processing operations
+  - name: Events
+    description: Real-time event streaming operations

@@ -1,0 +1,47 @@
+{
+  "name": "file-processing-service",
+  "version": "1.0.0",
+  "description": "Microservice-based file processing application",
+  "author": {
+    "name": "Heri Agape",
+    "email": "heri@heri.co",
+    "url": "https://github.com/0x6d6861"
+  },
+  "scripts": {
+    "build": "tsup",
+    "start:upload": "node dist/services/upload/server.js",
+    "start:processing": "node dist/services/processing/server.js",
+    "start:events": "node dist/services/events/server.js",
+    "dev:upload": "tsx watch --clear-screen=false src/services/upload/server.ts",
+    "dev:processing": "tsx watch --clear-screen=false src/services/processing/server.ts",
+    "dev:events": "tsx watch --clear-screen=false src/services/events/server.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "dotenv": "^16.4.7",
+    "hono": "^4.6.19",
+    "ioredis": "^5.4.2",
+    "mongodb": "^6.12.0",
+    "mongoose": "^8.9.5",
+    "papaparse": "^5.5.2",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "@types/papaparse": "^5.3.15",
+    "tsup": "^8.3.6",
+    "tsx": "^4.19.1",
+    "typescript": "^5.7.3"
+  },
+  "tsup": {
+    "entry": [
+      "src/**/*.{ts,tsx}"
+    ],
+    "splitting": false,
+    "sourcemap": true,
+    "clean": true
+  }
+}
