@@ -190,7 +190,7 @@ export const FileIcon: React.FC<{
   fileType: string;
 }> = ({ size = 36, ...props }) => {
   const height = size;
-  const width = size;
+  // const width = size;
 
   if (props.fileType === "application/vnd.ms-excel") {
     return (

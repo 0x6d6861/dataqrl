@@ -229,12 +229,18 @@ app.get('/files/:fileId/data', async (c) => {
 	const limit = parseInt(c.req.query('limit') || '10');
 
 
-	const query = c.req.query('query') ? JSON.parse(c.req.query('query') || '{}') : null;
-	const sort = c.req.query('sort') ? JSON.parse(c.req.query('sort') || '{}') : null;
+    const queryStr = c.req.query('query');
+    const sortStr = c.req.query('sort');
 
-	console.log('Query:', query);
-	console.log('Sort:', sort);
+    const query = queryStr ? (() => {
+        const parsed = JSON.parse(queryStr || '{}');
+        return Object.keys(parsed).length > 0 ? parsed : null;
+    })() : null;
 
+    const sort = sortStr ? (() => {
+        const parsed = JSON.parse(sortStr || '{}');
+        return Object.keys(parsed).length > 0 ? parsed : null;
+    })() : null;
 
 
 	try {

@@ -89,48 +89,23 @@ class FilesRepository {
 
 		const pipeline: mongoose.PipelineStage[] = [
 			{ $match: { _id: new mongoose.Types.ObjectId(fileId) } },
-			{ $unwind: "$processedData.data" },
-			{
-				$match: searchParams.query ? {
-					$and: Object.entries(searchParams.query).map(([key, value]) => ({
-                        [`processedData.data.${key}`]: typeof value === 'number'
-                            ? value
-                            : { $regex: value, $options: "i" }
-                    }))
-				} : {}
-			},
-			{
-				$facet: {
-					data: [
-						{ $skip: skip },
-						{ $limit: limit },
-						{
-							$project: {
-								data: "$processedData.data",
-								_id: 0
-							}
-						}
-					],
-					total: [
-						{ $count: "count" }
-					],
-					schema: [
-						{
-							$limit: 1
-						},
-						{
-							$project: {
-								schema: "$processedData.schema",
-								_id: 0
-							}
-						}
-					]
-				}
-			}
+			{ $unwind: "$processedData.data" }
 		];
 
-		if (searchParams.sort) {
-			pipeline.splice(3, 0, {
+		if (searchParams.query && Object.keys(searchParams.query).length > 0) {
+			pipeline.push({
+				$match: {
+					$and: Object.entries(searchParams.query).map(([key, value]) => ({
+						[`processedData.data.${key}`]: typeof value === 'number'
+							? value
+							: { $regex: value, $options: "i" }
+					}))
+				}
+			});
+		}
+
+		if (searchParams.sort && Object.keys(searchParams.sort).length > 0) {
+			pipeline.push({
 				$sort: Object.fromEntries(
 					Object.entries(searchParams.sort).map(([key, value]) =>
 						[`processedData.data.${key}`, value]
@@ -138,6 +113,35 @@ class FilesRepository {
 				)
 			});
 		}
+
+		pipeline.push({
+			$facet: {
+				data: [
+					{ $skip: skip },
+					{ $limit: limit },
+					{
+						$project: {
+							data: "$processedData.data",
+							_id: 0
+						}
+					}
+				],
+				total: [
+					{ $count: "count" }
+				],
+				schema: [
+					{
+						$limit: 1
+					},
+					{
+						$project: {
+							schema: "$processedData.schema",
+							_id: 0
+						}
+					}
+				]
+			}
+		});
 
 		const [result] = await MongoFile.aggregate(pipeline);
 

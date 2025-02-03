@@ -2,6 +2,7 @@ import { Card, CardBody, CardFooter } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { FileText, CheckCircleIcon, XCircleIcon } from "lucide-react";
 
 const uploadUrl = "/upload";
 
@@ -83,39 +84,63 @@ function UploadingFile({ file, onUploadComplete }: UploadingFileProps) {
   }, [error]);
 
   return (
-    <Card className="min-w-[400px]" shadow="sm">
-      <CardBody className="flex flex-row items-center space-x-3">
-        {/* <Avatar
-          icon={error ? <AlertCircle className="text-red-500" /> : <FileBox />}
-          size="lg"
-        /> */}
-        <div className="flex flex-col flex-1 gap-1">
-          {/* <p className="text-sm">{file.name}</p> */}
-          {error ? (
-            <p className="text-red-500 text-sm">{error}</p>
-          ) : (
-            <Progress
-              className="max-w-md"
-              color={isUploading ? "primary" : "success"}
-              label={file.name}
-              maxValue={100}
-              showValueLabel={true}
-              size="sm"
-              value={progress}
-            />
-          )}
+    <Card className="w-full max-w-2xl mx-auto hover:shadow-md transition-shadow duration-200">
+      <CardBody className="p-4">
+        <div className="flex items-center space-x-4">
+          <div className="flex-shrink-0">
+            {error ? (
+              <XCircleIcon className="w-8 h-8 text-red-500" />
+            ) : isUploading ? (
+                <FileText className="w-8 h-8 text-blue-500 animate-pulse" />
+            ) : (
+              <CheckCircleIcon className="w-8 h-8 text-green-500" />
+            )}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium text-gray-900 truncate mb-1">
+              {file.name}
+            </h3>
+            {error ? (
+              <p className="text-red-500 text-sm bg-red-50 p-2 rounded-md">
+                {error}
+              </p>
+            ) : (
+              <Progress
+                className="max-w-full"
+                color={isUploading ? "primary" : "success"}
+                maxValue={100}
+                showValueLabel={true}
+                size="sm"
+                value={progress}
+                classNames={{
+                  base: "max-w-full",
+                  track: "bg-gray-100",
+                  indicator: isUploading 
+                    ? "bg-blue-500" 
+                    : "bg-green-500",
+                  label: "text-xs font-medium text-gray-600",
+                  value: "text-xs font-medium text-gray-600"
+                }}
+              />
+            )}
+          </div>
         </div>
       </CardBody>
-      {/* <Divider /> */}
-      <CardFooter className="gap-3 flex flex-row justify-between">
-        <p className="text-sm text-gray-500">
-          Last modified: {new Date(file.lastModified).toLocaleString()}
-        </p>
-        <p className="text-sm text-gray-500">
-          {file.size > 1024 * 1024
-            ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-            : `${(file.size / 1024).toFixed(2)} KB`}
-        </p>
+
+      <CardFooter className="px-4 py-3 bg-gray-50">
+        <div className="w-full flex justify-between items-center text-xs text-gray-500">
+          <div className="flex items-center space-x-2">
+            <span className="inline-block">
+              Last modified: {new Date(file.lastModified).toLocaleString()}
+            </span>
+          </div>
+          <div className="font-medium">
+            {file.size > 1024 * 1024
+              ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+              : `${(file.size / 1024).toFixed(2)} KB`}
+          </div>
+        </div>
       </CardFooter>
     </Card>
   );

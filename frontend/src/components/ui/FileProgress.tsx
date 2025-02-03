@@ -2,9 +2,8 @@ import { Card, CardBody } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { FileIcon } from "../icons";
-
 import { UploadedFile } from "./EventSourcing";
 
 interface FileProgress {
@@ -81,47 +80,80 @@ const FileProgress: React.FC<FileProgressProps> = ({ fileId, file }) => {
     }
   };
 
+  const getStatusIcon = () => {
+    switch (progress.status) {
+      case "COMPLETED":
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case "ERROR":
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
+      case "PROCESSING":
+        return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Card className="w-[400px]" shadow="none">
-      <CardBody className="flex flex-row gap-3 items-center">
-        <FileIcon fileType={file?.metadata?.mimeType} size={36} />
-        <div className="flex-1">
-          {progress.error ? (
-            <p className="text-sm font-medium text-danger">
-              Error: {progress.error}
-            </p>
-          ) : (
-            <>
-              <div>
-                {/* <span>{file?.metadata?.originalName}</span> */}
+    <Card className="w-full max-w-xl hover:shadow-md transition-all duration-200">
+      <CardBody className="p-4">
+        <div className="flex items-start space-x-4">
+          <div className="flex-shrink-0">
+            <FileIcon fileType={file?.metadata?.mimeType} size={40} />
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-gray-900 truncate">
+                {file?.metadata?.originalName}
+              </h3>
+              <div className="flex-shrink-0 ml-2">
+                {getStatusIcon()}
+              </div>
+            </div>
+
+            {progress.error ? (
+              <div className="bg-red-50 border border-red-100 rounded-md p-3">
+                <p className="text-sm text-red-600">
+                  {progress.error}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
                 <Progress
                   color={getStatusColor()}
-                  //   label={file?.metadata?.originalName}
-                  {...(progress.status === "COMPLETED"
-                    ? {
-                        label: file?.metadata?.originalName,
-
-                        showValueLabel: true,
-                      }
-                    : {
-                        label:
-                          progress.status !== "ERROR"
-                            ? file?.metadata?.originalName
-                            : progress.error,
-                        isIndeterminate: progress.status !== "ERROR",
-                      })}
-                  aria-label="Loading..."
+                  aria-label="Processing..."
                   size="sm"
                   value={progress.progress}
+                  classNames={{
+                    base: "max-w-full",
+                    track: "bg-gray-100",
+                    indicator: progress.status === "COMPLETED" 
+                      ? "bg-green-500" 
+                      : progress.status === "ERROR"
+                      ? "bg-red-500"
+                      : "bg-blue-500",
+                    label: "text-xs font-medium text-gray-600",
+                    value: "text-xs font-medium text-gray-600"
+                  }}
+                  {...(progress.status === "PROCESSING" && { 
+                    isIndeterminate: true 
+                  })}
                 />
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>
+                    {progress.status === "PROCESSING" 
+                      ? "Processing..." 
+                      : progress.status === "COMPLETED"
+                      ? "Completed"
+                      : progress.status === "ERROR"
+                      ? "Failed"
+                      : "Pending"}
+                  </span>
+                  <span>{progress.progress}%</span>
+                </div>
               </div>
-              {/* <p className="text-sm font-medium">
-                {progress.status === "PROCESSING"
-                  ? "Processing..."
-                  : progress.status?.toLocaleLowerCase()}
-              </p> */}
-            </>
-          )}
+            )}
+          </div>
         </div>
       </CardBody>
     </Card>

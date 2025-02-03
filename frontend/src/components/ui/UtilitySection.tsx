@@ -1,66 +1,46 @@
-import { useCallback, useEffect, useState } from "react";
+// import { useCallback, useState } from "react";
+import { Link } from "@heroui/link";
+import { Card, CardBody } from "@heroui/card";
 
-import FileCard, { FileData } from "./FileCard";
-import EventSourcing, { UploadedFile } from "./EventSourcing";
-import FileProgress from "./FileProgress";
+// import EventSourcing, { UploadedFile } from "./EventSourcing";
+import FilesTable from "./FilesTable";
 
-const fileData = {
-  processedData: {
-    summary: {
-      rowCount: 934,
-    },
-  },
-  _id: "679cd55a448027445f3df0cc",
-  originalName: "customers_with_businesses (1).csv",
-  mimeType: "text/csv",
-  size: 247047,
-  status: "COMPLETED",
-  createdAt: "2025-01-31T13:51:22.270Z",
-};
-
-const getRecentFiles = () => {
-  return fetch("/files?limit=5&sort=createdAt&order=desc")
-    .then((res) => res.json())
-    .then((data) => data.data.files);
-};
+import { api } from "@/services/api";
 
 function UtilitySection() {
-  const [data, setData] = useState<UploadedFile[]>([]);
-  const [recents, setRecents] = useState<FileData[]>([]);
+  const { data: recents, isLoading, isFetching } = api.useGetRecentFilesQuery();
+  // const [data, setData] = useState<UploadedFile[]>([]);
 
-  const addToData = useCallback((file: UploadedFile) => {
-    setData((prevData) => [file, ...prevData]);
-  }, []);
+  // const addToData = useCallback((file: UploadedFile) => {
+  //   setData((prevData) => [file, ...prevData]);
+  // }, []);
 
-  const removeFromData = useCallback((file: UploadedFile) => {
-    setData((prevData) =>
-      prevData.filter((item: UploadedFile) => item.fileId !== file.fileId),
-    );
-  }, []);
-
-  useEffect(() => {
-    getRecentFiles().then((data: FileData[]) => {
-      setRecents(data);
-    });
-  }, []);
+  const reventFiles = recents?.data?.files || [];
 
   return (
-    <>
-      <EventSourcing onUpload={addToData} />
-      <div className="flex w-full flex-col space-y-6">
-        <div className="min-h-[150px] rounded-lg w-full p-6 bg-gray-50 space-y-3">
-          {data.map((file: UploadedFile) => (
-            <FileProgress key={file.fileId} file={file} fileId={file.fileId} />
-          ))}
-        </div>
+    <div className="max-w-7xl mx-auto p-6">
+      {/* <EventSourcing onUpload={addToData} /> */}
 
-        <div className="min-h-[350px] rounded-lg w-full space-y-4">
-          {recents.map((file: FileData) => (
-            <FileCard key={file._id} data={file} />
-          ))}
-        </div>
+      <div className="flex w-full flex-col space-y-8">
+        <Card>
+          <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex justify-between items-center">
+            <h3 className="text-lg font-medium text-gray-800">Recent Files</h3>
+            <Link
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              href="/uploads"
+            >
+              View all files →
+            </Link>
+          </div>
+          <CardBody>
+            <FilesTable
+              data={reventFiles}
+              isLoading={isLoading || isFetching}
+            />
+          </CardBody>
+        </Card>
       </div>
-    </>
+    </div>
   );
 }
 
