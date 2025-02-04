@@ -1,0 +1,1 @@
+2025/02/04 08:24:21 [warn] 22#22: *8 a client request body is buffered to a temporary file /var/cache/nginx/client_temp/0000000001, client: 172.18.0.1, server: localhost, request: "POST /api/upload/upload HTTP/1.1", host: "localhost", referrer: "http://localhost/"
