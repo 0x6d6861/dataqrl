@@ -1,0 +1,482 @@
+openapi: 3.1.1
+info:
+  title: DataQRL API
+  version: 1.0.0
+  description: API documentation for DataQRL services including Upload, Processing, and Events
+
+servers:
+  - url: http://localhost/api
+    description: Gateway API endpoint
+  - url: http://localhost:3000
+    description: Upload Service (Direct)
+  - url: http://localhost:3001
+    description: Processing Service (Direct)
+  - url: http://localhost:3002
+    description: Events Service (Direct)
+
+paths:
+  /upload/upload:
+    post:
+      summary: Upload a file
+      tags: [Upload]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fileId:
+                        type: string
+                      status:
+                        type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /upload/files:
+    get:
+      summary: List all files
+      tags: [Upload]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, PROCESSING, COMPLETED, ERROR]
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      files:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/File'
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                          limit:
+                            type: integer
+                          total:
+                            type: integer
+                          totalPages:
+                            type: integer
+
+  /upload/files/{fileId}:
+    get:
+      summary: Get file details
+      tags: [Upload]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      file:
+                        $ref: '#/components/schemas/File'
+    delete:
+      summary: Delete a file
+      tags: [Upload]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /upload/files/{fileId}/data:
+    get:
+      summary: Get file data with pagination and filtering
+      tags: [Upload]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: query
+          in: query
+          schema:
+            type: string
+            description: JSON query string for filtering
+        - name: sort
+          in: query
+          schema:
+            type: string
+            description: JSON sort criteria
+      responses:
+        '200':
+          description: File data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      file:
+                        $ref: '#/components/schemas/ProcessedData'
+
+  /upload/data/{fileId}:
+    get:
+      summary: Get processed file data
+      tags: [Processing]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Processed file data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      file:
+                        type: object
+                        properties:
+                          originalName:
+                            type: string
+                          mimeType:
+                            type: string
+                          status:
+                            type: string
+                          createdAt:
+                            type: string
+                            format: date-time
+                      processedData:
+                        $ref: '#/components/schemas/ProcessedData'
+
+  /processing/retry/{fileId}:
+    post:
+      summary: Retry processing a file
+      tags: [Processing]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Processing retry initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /processing/events/{fileId}:
+    get:
+      summary: Subscribe to events for a specific file
+      tags: [Events]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /events/events:
+    get:
+      summary: Subscribe to all events
+      tags: [Events]
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /events/connections/{fileId}:
+    get:
+      summary: Get connection count for a specific file
+      tags: [Events]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connection count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fileId:
+                        type: string
+                      connections:
+                        type: integer
+
+components:
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+  schemas:
+    Error:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            error:
+              type: string
+              example: "Error message"
+    File:
+      type: object
+      required:
+        - _id
+        - originalName
+        - mimeType
+        - status
+        - createdAt
+      properties:
+        _id:
+          type: string
+          example: "60d5ecb8b5c9c62b3c7c1b5e"
+          description: Unique identifier for the file
+        originalName:
+          type: string
+          example: "data.csv"
+          description: Original filename
+        mimeType:
+          type: string
+          example: "text/csv"
+          description: MIME type of the file
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, ERROR]
+          description: Current processing status of the file
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the file was uploaded
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of last status update
+        size:
+          type: integer
+          description: File size in bytes
+          example: 1024
+        path:
+          type: string
+          example: "/uploads/60d5ecb8b5c9c62b3c7c1b5e/data.csv"
+          description: Internal storage path
+        processingError:
+          type: string
+          nullable: true
+          description: Error message if processing failed
+    ProcessedData:
+      type: object
+      required:
+        - data
+        - schema
+        - summary
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Array of processed records
+        schema:
+          type: object
+          properties:
+            fields:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Field name
+                  type:
+                    type: string
+                    enum: [string, number, boolean, date, object, array]
+                    description: Field data type
+                  nullable:
+                    type: boolean
+                    description: Whether the field can be null
+          description: Schema definition of the processed data
+        summary:
+          type: object
+          properties:
+            rowCount:
+              type: integer
+              description: Total number of records
+            columnCount:
+              type: integer
+              description: Total number of columns
+            dataTypes:
+              type: object
+              additionalProperties:
+                type: string
+              description: Mapping of column names to their data types
+            statistics:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  min:
+                    type: number
+                  max:
+                    type: number
+                  mean:
+                    type: number
+                  median:
+                    type: number
+                  nullCount:
+                    type: integer
+              description: Statistical summary for numeric columns
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+        limit:
+          type: integer
+          minimum: 1
+          description: Number of items per page
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+        totalPages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+
+tags:
+  - name: Upload
+    description: File upload and management operations
+  - name: Processing
+    description: File processing operations
+  - name: Events
+    description: Real-time event streaming operations
