@@ -36,7 +36,7 @@ function FileHandler({ file, onUploadComplete }: FileHandlerProps) {
       try {
         const xhr = new XMLHttpRequest();
 
-        xhr.open("POST", "/upload");
+        xhr.open("POST", "/api/upload/upload");
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
@@ -91,7 +91,7 @@ function FileHandler({ file, onUploadComplete }: FileHandlerProps) {
 
   // Handle file processing
   const initializeProcessingProgress = (fileId: string) => {
-    const eventSource = new EventSource(`/events/${fileId}`);
+    const eventSource = new EventSource(`/api/events/events/${fileId}`);
   
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);

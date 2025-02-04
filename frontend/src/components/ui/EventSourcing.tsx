@@ -32,7 +32,7 @@ const FileProgress: React.FC<{
   });
 
   useEffect(() => {
-    const eventSource = new EventSource(`/events`);
+    const eventSource = new EventSource(`/api/events/events`);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);

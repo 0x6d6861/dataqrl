@@ -4,7 +4,12 @@ import path from 'path';
 
 dotenv.config();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Cross-compatible __dirname for ESM and CJS
+// const __dirname = typeof __dirname !== 'undefined'
+//     ? __dirname
+//     : path.dirname(fileURLToPath(import.meta.url));
+
+// const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const config = {
     mongodb: {

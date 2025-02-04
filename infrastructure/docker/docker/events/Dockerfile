@@ -11,6 +11,9 @@ RUN npm run build
 ENV NODE_ENV=production
 ENV SERVICE=events
 
+VOLUME ["/app/uploads"]
+
+
 EXPOSE 3002
 
-CMD ["node", "dist/services/events/index.js"]
+CMD ["node", "dist/services/events/server.js"]

@@ -1,3 +1,5 @@
+import EventSourcing, { UploadedFile } from "@/components/ui/EventSourcing";
+
 export default function DefaultLayout({
   children,
 }: {
@@ -10,8 +12,14 @@ export default function DefaultLayout({
         <div className="flex-1 h-full">{children}</div>
       </main>
       {/* <footer className="w-full flex items-center justify-center py-3">
-
+    
       </footer> */}
+      <EventSourcing
+        onUpload={function (file: UploadedFile): void {
+          console.log("File => ", file)
+          // throw new Error("Function not implemented.");
+        }}
+      />
     </div>
   );
 }

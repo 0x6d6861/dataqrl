@@ -10,7 +10,8 @@ RUN npm run build
 
 ENV NODE_ENV=production
 ENV SERVICE=upload
+VOLUME ["/app/uploads"]
 
 EXPOSE 3000
 
-CMD ["node", "dist/services/upload/index.js"]
+CMD ["node", "dist/services/upload/server.js"]

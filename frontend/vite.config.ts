@@ -6,17 +6,12 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   server: {
     proxy: {
-      "/upload": {
+      "/api/upload": {
         target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
       },
-      "/files": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
-      "/events": {
+      "/api/events": {
         target: "http://localhost:3002",
         changeOrigin: true,
         secure: false,

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FileText, CheckCircleIcon, XCircleIcon } from "lucide-react";
 
-const uploadUrl = "/upload";
+const uploadUrl = "/api/upload/upload";
 
 interface UploadingFileProps {
   file: File;
